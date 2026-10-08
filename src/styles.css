@@ -278,6 +278,7 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 .metrics-grid { display: grid; gap: 11px; margin-bottom: 21px; }
 .metrics-six { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .metrics-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.metrics-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .metric-card {
   position: relative;
   overflow: hidden;
@@ -371,10 +372,11 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 .bar-chart-frame { width: 100%; height: 210px; }
 .tool-bars { height: 216px; margin-top: 0; }
 .model-token-bars { height: 296px; margin-top: 0; }
+.user-token-bars { height: 296px; margin-top: 0; }
 .error-bars { height: 206px; margin-top: 1px; }
-.tokens-grid { grid-template-columns: minmax(0, 1.2fr) minmax(380px, .8fr); }
+.tokens-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tokens-grid .panel { min-height: 365px; }
-.tokens-grid .panel-wide { min-height: 365px; }
+.tokens-grid .panel-wide { grid-column: 1 / -1; min-height: 365px; }
 .tokens-grid .panel-wide .chart-frame { height: 296px; }
 .tokens-grid .panel:not(.panel-wide) .panel-header { min-height: 37px; }
 .tokens-grid .panel:not(.panel-wide) .bar-chart-frame { height: 296px; }
@@ -517,6 +519,7 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   .chart-grid { grid-template-columns: 1fr; }
   .metrics-six { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metrics-three { grid-template-columns: 1fr; }
+  .metrics-two { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 560px) {

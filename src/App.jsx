@@ -34,6 +34,7 @@ import {
   Cell,
   ComposedChart,
   Line,
+  LabelList,
   LineChart,
   ResponsiveContainer,
   Tooltip,
@@ -44,6 +45,7 @@ import {
   MODEL_ERRORS,
   MODEL_LATENCY,
   MODEL_TOKENS,
+  USER_TOKENS,
   TOOL_CALLS,
   TOOL_ERRORS,
   createSeries,
@@ -625,8 +627,44 @@ function TokensView({ series, tokenTotal, inputTokens, outputTokens, hidden, onT
           </div>
           <ToggleLegend items={[{ key: "modelInput", label: "输入 Token", color: GREEN }, { key: "modelOutput", label: "输出 Token", color: BLUE }]} hidden={hidden} onToggle={onToggle} />
         </Panel>
+        <Panel
+          title="用户 Token 用量 TOP10"
+          subtitle="按总 Token 用量降序 · 点击用户查看明细"
+          action={<span className="chart-unit">Token</span>}
+        >
+          <div className="bar-chart-frame user-token-bars">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={USER_TOKENS}
+                layout="vertical"
+                margin={{ top: 4, right: 44, left: 4, bottom: 0 }}
+                onClick={(entry) => {
+                  const user = entry?.activePayload?.[0]?.payload;
+                  if (user) onDrill("用户 · " + user.name, user.userId);
+                }}
+              >
+                <CartesianGrid stroke="#edf0f0" horizontal={false} />
+                <XAxis type="number" tickLine={false} axisLine={{ stroke: "#dce2e2" }} tick={{ fill: MUTED, fontSize: 10 }} tickFormatter={(value) => formatCompact(value)} />
+                <YAxis type="category" dataKey="displayName" width={76} tickLine={false} axisLine={false} tick={{ fill: "#71817c", fontSize: 10 }} />
+                <Tooltip
+                  {...CHART_TOOLTIP}
+                  labelFormatter={(_, payload) => {
+                    const user = payload?.[0]?.payload;
+                    return user ? user.name + " · " + user.department + " · 总 Token " + formatCompact(user.total) : "";
+                  }}
+                  formatter={(value, name) => [formatCompact(Number(value)), name]}
+                />
+                <Bar hide={hidden.userInput} dataKey="input" name="输入 Token" stackId="userTokens" fill={GREEN} barSize={13} cursor="pointer" />
+                <Bar hide={hidden.userOutput} dataKey="output" name="输出 Token" stackId="userTokens" fill={BLUE} radius={[0, 5, 5, 0]} barSize={13} cursor="pointer">
+                  <LabelList dataKey="total" position="right" formatter={(value) => formatCompact(Number(value))} fill="#60716a" fontSize={9} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <ToggleLegend items={[{ key: "userInput", label: "输入 Token", color: GREEN }, { key: "userOutput", label: "输出 Token", color: BLUE }]} hidden={hidden} onToggle={onToggle} />
+        </Panel>
       </div>
-      <div className="note-banner"><Eye size={16} /><span>本期展示模型维度用量分布；组织内 Token 用量排名暂未纳入当前版本。</span></div>
+      <div className="note-banner"><Eye size={16} /><span>用户排名按输入与输出 Token 总量计算，不含缓存 Token；点击用户可下钻用量明细。</span></div>
     </div>
   );
 }
@@ -677,10 +715,9 @@ function PerformanceView({ series, hidden, onToggle, onDrill }) {
   const formatMetric = (value) => `${Number(value).toFixed(metric.unit === "Token/s" ? 1 : 2)} ${metric.unit}`;
   return (
     <div className="view-content">
-      <div className="metrics-grid metrics-three">
+      <div className="metrics-grid metrics-two">
         <MetricInlineCard label="端到端对话耗时" main="12.8s" color="blue" note="有效样本 26.3 万" values={[{ label: "P50", value: "12.8s" }, { label: "P90", value: "38.5s" }, { label: "P99", value: "128s" }]} />
         <MetricInlineCard label="首 Token 耗时" main="0.82s" color="teal" note="有效样本 25.9 万" values={[{ label: "P50", value: "0.82s" }, { label: "P90", value: "2.35s" }, { label: "P99", value: "6.80s" }]} />
-        <MetricCard label="耗时样本覆盖率" value="98.4" unit="%" trend="0.8%" tone="green" icon={CheckCircle} onClick={() => onDrill("有效耗时样本", null)} />
       </div>
       <div className="section-heading">
         <div><span className="section-bar section-teal" /><h2>响应性能</h2><span className="section-caption">仅统计具有有效耗时样本的 Trace</span></div>

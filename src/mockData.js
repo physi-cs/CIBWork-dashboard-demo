@@ -80,6 +80,20 @@ export const MODEL_TOKENS = [
   { name: "其他", input: 2.5, output: 1.9, calls: 6 },
 ].map((row) => ({ ...row, total: row.input + row.output }));
 
+export const USER_TOKENS = [
+  { userId: "u-1048", name: "顾言舟", department: "平台研发", input: 35000000, output: 29000000 },
+  { userId: "u-1137", name: "林知远", department: "智能应用", input: 31000000, output: 24000000 },
+  { userId: "u-1294", name: "周星遥", department: "数据平台", input: 32000000, output: 19000000 },
+  { userId: "u-1362", name: "陈予安", department: "企业应用", input: 29000000, output: 18000000 },
+  { userId: "u-1419", name: "王以宁", department: "平台研发", input: 27000000, output: 17000000 },
+  { userId: "u-1581", name: "许沐阳", department: "智能应用", input: 25000000, output: 16000000 },
+  { userId: "u-1625", name: "季书言", department: "平台研发", input: 23000000, output: 16000000 },
+  { userId: "u-1740", name: "沈清禾", department: "企业应用", input: 22000000, output: 15000000 },
+  { userId: "u-1893", name: "郑云舟", department: "数据平台", input: 21000000, output: 14000000 },
+  { userId: "u-1918", name: "唐若川", department: "智能应用", input: 19000000, output: 13000000 },
+].map((user) => ({ ...user, total: user.input + user.output }))
+  .sort((left, right) => right.total - left.total)
+  .map((user, index) => ({ ...user, displayName: String(index + 1).padStart(2, "0") + " " + user.name }));
 export const MODEL_LATENCY = [
   { name: "qwen3-max", calls: 188000, callAvg: 1.82, callP95: 4.6, callP99: 7.8, ttftP50: 0.44, ttftP90: 1.26, ttftP99: 3.1, outputTps: 36 },
   { name: "claude-sonnet-4", calls: 164000, callAvg: 2.28, callP95: 5.9, callP99: 9.4, ttftP50: 0.51, ttftP90: 1.48, ttftP99: 3.7, outputTps: 29 },

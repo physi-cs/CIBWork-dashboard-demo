@@ -18,6 +18,6 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Current design decisions
 
-- The performance view compares model performance with one line per selected model. Its metric selector includes model-call average/P95/P99 latency, first-token P50/P90/P99 latency, and output TPS; tooltips show the metric value and sample count.
-- Keep total, input, and output Token usage visible without cache-token metrics. Keep Token usage and performance metrics separate; do not add cost or credit metrics to the performance view.
+- The performance view keeps endpoint and first-token percentile cards only; do not show a latency-sample coverage metric or card. It compares model performance with one line per selected model. Its metric selector includes model-call average/P95/P99 latency, first-token P50/P90/P99 latency, and output TPS; tooltips show the metric value and sample count.
+- Keep total, input, and output Token usage visible without cache-token metrics. Add a Top 10 user ranking by total Token usage (input plus output). Keep Token usage and performance metrics separate; do not add cost or credit metrics to the performance view.
 - The prototype uses mock data only.
