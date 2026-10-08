@@ -15,3 +15,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Keep “会话追踪” visible in the sidebar but disabled; the tracking page is out of scope for this phase.
 - Use `#355eb8` with neutral white and gray for controls and navigation. Preserve the current metric-card and chart palettes.
 - Do not copy the WorkBuddy reference’s cost page or department-level constructs; the PRD intentionally changes those areas.
+
+## Current design decisions
+
+- The performance view compares model performance with one line per selected model. Its metric selector includes model-call average/P95/P99 latency, first-token P50/P90/P99 latency, and output TPS; tooltips show the metric value and sample count.
+- Keep total, input, and output Token usage visible without cache-token metrics. Keep Token usage and performance metrics separate; do not add cost or credit metrics to the performance view.
+- The prototype uses mock data only.

@@ -81,17 +81,17 @@ export const MODEL_TOKENS = [
 ].map((row) => ({ ...row, total: row.input + row.output }));
 
 export const MODEL_LATENCY = [
-  { name: "qwen3-max", base: 0.44 },
-  { name: "claude-sonnet-4", base: 0.51 },
-  { name: "deepseek-v3", base: 0.38 },
-  { name: "gpt-4.1", base: 0.62 },
-  { name: "qwen-plus", base: 0.3 },
-  { name: "gemini-2.5-pro", base: 0.55 },
-  { name: "glm-4.5", base: 0.34 },
-  { name: "qwen2.5-72b", base: 0.48 },
-  { name: "gpt-4.1-mini", base: 0.26 },
-  { name: "deepseek-r1", base: 0.7 },
-  { name: "其他", base: 0.32 },
+  { name: "qwen3-max", calls: 188000, callAvg: 1.82, callP95: 4.6, callP99: 7.8, ttftP50: 0.44, ttftP90: 1.26, ttftP99: 3.1, outputTps: 36 },
+  { name: "claude-sonnet-4", calls: 164000, callAvg: 2.28, callP95: 5.9, callP99: 9.4, ttftP50: 0.51, ttftP90: 1.48, ttftP99: 3.7, outputTps: 29 },
+  { name: "deepseek-v3", calls: 149000, callAvg: 1.54, callP95: 3.8, callP99: 6.2, ttftP50: 0.38, ttftP90: 1.06, ttftP99: 2.8, outputTps: 42 },
+  { name: "gpt-4.1", calls: 121000, callAvg: 2.45, callP95: 6.4, callP99: 10.2, ttftP50: 0.62, ttftP90: 1.72, ttftP99: 4.1, outputTps: 31 },
+  { name: "qwen-plus", calls: 112000, callAvg: 1.24, callP95: 3.1, callP99: 5.2, ttftP50: 0.3, ttftP90: 0.88, ttftP99: 2.2, outputTps: 48 },
+  { name: "gemini-2.5-pro", calls: 96000, callAvg: 2.14, callP95: 5.5, callP99: 8.8, ttftP50: 0.55, ttftP90: 1.58, ttftP99: 3.9, outputTps: 34 },
+  { name: "glm-4.5", calls: 83000, callAvg: 1.38, callP95: 3.4, callP99: 5.6, ttftP50: 0.34, ttftP90: 0.98, ttftP99: 2.5, outputTps: 39 },
+  { name: "qwen2.5-72b", calls: 76000, callAvg: 1.96, callP95: 5.1, callP99: 8.1, ttftP50: 0.48, ttftP90: 1.38, ttftP99: 3.4, outputTps: 32 },
+  { name: "gpt-4.1-mini", calls: 61000, callAvg: 1.12, callP95: 2.8, callP99: 4.5, ttftP50: 0.26, ttftP90: 0.76, ttftP99: 1.9, outputTps: 51 },
+  { name: "deepseek-r1", calls: 44000, callAvg: 3.1, callP95: 8.2, callP99: 13.6, ttftP50: 0.7, ttftP90: 2.02, ttftP99: 5.1, outputTps: 22 },
+  { name: "其他", calls: 32000, callAvg: 1.48, callP95: 3.7, callP99: 6.1, ttftP50: 0.32, ttftP90: 0.92, ttftP99: 2.4, outputTps: 35 },
 ];
 
 export const TOOL_CALLS = [

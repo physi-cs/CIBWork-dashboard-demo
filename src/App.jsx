@@ -35,7 +35,6 @@ import {
   ComposedChart,
   Line,
   LineChart,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -78,6 +77,16 @@ const CHART_TOOLTIP = {
   itemStyle: { color: "#4b5d58", paddingBlock: 2 },
   cursor: { stroke: "#aab9b4", strokeDasharray: "3 4" },
 };
+
+const MODEL_PERFORMANCE_METRICS = [
+  { value: "callAvg", label: "调用耗时均值", unit: "s" },
+  { value: "callP95", label: "调用耗时 P95", unit: "s" },
+  { value: "callP99", label: "调用耗时 P99", unit: "s" },
+  { value: "ttftP50", label: "首 Token P50", unit: "s" },
+  { value: "ttftP90", label: "首 Token P90", unit: "s" },
+  { value: "ttftP99", label: "首 Token P99", unit: "s" },
+  { value: "outputTps", label: "输出 TPS", unit: "Token/s" },
+];
 
 function formatCompact(value, unit = "") {
   if (value >= 100000000) return (value / 100000000).toFixed(2).replace(/\.00$/, "") + "亿" + unit;
@@ -179,21 +188,6 @@ function ToggleLegend({ items, hidden, onToggle }) {
   );
 }
 
-function ToggleGroup({ options, value, onChange, ariaLabel }) {
-  return (
-    <div className="toggle-group" role="group" aria-label={ariaLabel}>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          className={value === option.value ? "is-selected" : ""}
-          onClick={() => onChange(option.value)}
-          aria-pressed={value === option.value}
-        >{option.label}</button>
-      ))}
-    </div>
-  );
-}
-
 function EmptyChart({ children, className = "" }) {
   return (
     <div className={"chart-frame " + className}>
@@ -211,8 +205,6 @@ export function App() {
   const [sceneFilter, setSceneFilter] = useState("all");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [updatedAt, setUpdatedAt] = useState("10:42:36");
-  const [topN, setTopN] = useState(5);
-  const [quantile, setQuantile] = useState("p50");
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [toast, setToast] = useState("");
 
@@ -452,10 +444,6 @@ export function App() {
                 hidden={hiddenSeries}
                 onToggle={toggleSeries}
                 onDrill={openDrill}
-                topN={topN}
-                setTopN={setTopN}
-                quantile={quantile}
-                setQuantile={setQuantile}
               />
             )}
             {view === "quality" && (
@@ -643,16 +631,50 @@ function TokensView({ series, tokenTotal, inputTokens, outputTokens, hidden, onT
   );
 }
 
-function PerformanceView({ series, hidden, onToggle, onDrill, topN, setTopN, quantile, setQuantile }) {
-  const quantileFactor = quantile === "p50" ? 1 : quantile === "p90" ? 2.2 : 4.7;
-  const modelData = MODEL_LATENCY.slice(0, topN);
-  const modelSeries = series.map((point, pointIndex) => ({
-    ...point,
-    ...Object.fromEntries(modelData.map((model, index) => [
-      model.name,
-      Number((model.base * quantileFactor * (1 + Math.sin(pointIndex / 3.2 + index * 0.65) * 0.17) + Math.max(0, Math.sin(pointIndex / 4 + index)) * model.base * 0.1).toFixed(2)),
-    ])),
-  }));
+function ModelPicker({ models, selected, onChange }) {
+  const toggleModel = (name) => {
+    onChange(selected.includes(name) ? selected.filter((item) => item !== name) : [...selected, name]);
+  };
+  return (
+    <details className="model-picker">
+      <summary aria-label="筛选模型">
+        <span>模型 {selected.length}/{models.length}</span><CaretDown size={12} weight="bold" />
+      </summary>
+      <div className="model-picker-menu">
+        <div className="model-picker-actions">
+          <span>选择要对比的模型</span>
+          <button type="button" onClick={() => onChange(models.slice(0, 5).map((model) => model.name))}>默认 Top 5</button>
+          <button type="button" onClick={() => onChange([])}>清空</button>
+        </div>
+        <div className="model-picker-list">
+          {models.map((model) => (
+            <label key={model.name}>
+              <input type="checkbox" checked={selected.includes(model.name)} onChange={() => toggleModel(model.name)} />
+              <span>{model.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function PerformanceView({ series, hidden, onToggle, onDrill }) {
+  const [metricKey, setMetricKey] = useState("callAvg");
+  const [selectedModels, setSelectedModels] = useState(() => MODEL_LATENCY.slice(0, 5).map((model) => model.name));
+  const metric = MODEL_PERFORMANCE_METRICS.find((item) => item.value === metricKey) ?? MODEL_PERFORMANCE_METRICS[0];
+  const modelData = MODEL_LATENCY.filter((model) => selectedModels.includes(model.name));
+  const modelSeries = series.map((point, pointIndex) => {
+    const row = { ...point };
+    modelData.forEach((model) => {
+      const modelIndex = MODEL_LATENCY.findIndex((item) => item.name === model.name);
+      const wave = 1 + Math.sin(pointIndex / 3.2 + modelIndex * 0.65) * 0.11 + Math.max(0, Math.sin(pointIndex / 4 + modelIndex)) * 0.07;
+      row[model.name] = Number((model[metricKey] * wave).toFixed(2));
+      row[`${model.name}__samples`] = Math.round(720 + Math.sin(pointIndex / 3 + modelIndex) * 125 + modelIndex * 37);
+    });
+    return row;
+  });
+  const formatMetric = (value) => `${Number(value).toFixed(metric.unit === "Token/s" ? 1 : 2)} ${metric.unit}`;
   return (
     <div className="view-content">
       <div className="metrics-grid metrics-three">
@@ -699,22 +721,52 @@ function PerformanceView({ series, hidden, onToggle, onDrill, topN, setTopN, qua
           />
         </Panel>
         <Panel
-          title="模型首 Token 耗时"
-          subtitle="按所选分位展示模型趋势与相对耗时"
+          title="模型性能趋势"
+          subtitle="按指标与模型对比调用耗时、首 Token 耗时及输出 TPS"
           action={
             <div className="panel-controls">
-              <ToggleGroup ariaLabel="模型数量" options={[{ value: 5, label: "Top 5" }, { value: 10, label: "Top 10" }, { value: 20, label: "Top 20" }]} value={topN} onChange={setTopN} />
-              <ToggleGroup ariaLabel="耗时分位数" options={[{ value: "p50", label: "P50" }, { value: "p90", label: "P90" }, { value: "p99", label: "P99" }]} value={quantile} onChange={setQuantile} />
+              <label className="metric-select">
+                <span>指标</span>
+                <select aria-label="模型性能指标" value={metricKey} onChange={(event) => setMetricKey(event.target.value)}>
+                  {MODEL_PERFORMANCE_METRICS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                </select>
+                <CaretDown size={11} weight="bold" />
+              </label>
+              <ModelPicker models={MODEL_LATENCY} selected={selectedModels} onChange={setSelectedModels} />
             </div>
           }
         >
-          <EmptyChart>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={modelSeries} margin={{ top: 12, right: 14, left: -12, bottom: 0 }} onClick={(state) => state?.activeLabel && onDrill("模型耗时 · " + state.activeLabel, null)}>
+          {modelData.length ? (
+            <EmptyChart>
+              <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={modelSeries}
+                margin={{ top: 12, right: 14, left: -12, bottom: 0 }}
+                onClick={(state) => {
+                  if (!state?.activeLabel) return;
+                  const modelName = state.activePayload?.find((item) => modelData.some((model) => model.name === item.dataKey))?.dataKey;
+                  onDrill(modelName ? `模型性能 · ${modelName} · ${state.activeLabel}` : `模型性能 · ${state.activeLabel}`, modelName ?? null);
+                }}
+              >
                 <CartesianGrid stroke="#edf0f0" vertical={false} />
                 <XAxis dataKey="time" tickLine={false} axisLine={{ stroke: "#dce2e2" }} tick={{ fill: MUTED, fontSize: 11 }} interval="preserveStartEnd" />
-                <YAxis tickLine={false} axisLine={false} tick={{ fill: MUTED, fontSize: 11 }} width={45} tickFormatter={(value) => Number(value).toFixed(1) + "s"} />
-                <Tooltip {...CHART_TOOLTIP} formatter={(value) => [Number(value).toFixed(2) + "s", "耗时"]} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fill: MUTED, fontSize: 11 }} width={55} tickFormatter={(value) => Number(value).toFixed(metric.unit === "Token/s" ? 0 : 1) + (metric.unit === "Token/s" ? " t/s" : "s")} />
+                <Tooltip
+                  {...CHART_TOOLTIP}
+                  formatter={(value) => [formatMetric(value)]}
+                  content={({ active, payload, label }) => active && payload?.length ? (
+                    <div className="model-performance-tooltip">
+                      <div className="model-tooltip-heading">{label} · {metric.label}</div>
+                      {payload.filter((item) => typeof item.value === "number").map((item) => (
+                        <div className="model-tooltip-row" key={item.dataKey}>
+                          <span><i style={{ backgroundColor: item.color }} />{item.name}</span>
+                          <b>{formatMetric(item.value)}</b>
+                          <small>{Number(item.payload?.[`${item.dataKey}__samples`] ?? 0).toLocaleString("zh-CN")} 次</small>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                />
                 {modelData.map((model, index) => (
                   <Line
                     key={model.name}
@@ -722,20 +774,21 @@ function PerformanceView({ series, hidden, onToggle, onDrill, topN, setTopN, qua
                     type="monotone"
                     dataKey={model.name}
                     name={model.name}
-                    stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                    stroke={CHART_COLORS[MODEL_LATENCY.findIndex((item) => item.name === model.name) % CHART_COLORS.length]}
                     strokeWidth={index === 0 ? 2.4 : 1.8}
                     dot={false}
-                    onClick={() => onDrill("模型首 Token · " + model.name, model.name)}
                   />
                 ))}
-                <ReferenceLine y={quantile === "p50" ? 0.7 : quantile === "p90" ? 1.6 : 3.2} stroke="#dfe6e4" strokeDasharray="4 4" />
               </LineChart>
-            </ResponsiveContainer>
-          </EmptyChart>
+              </ResponsiveContainer>
+            </EmptyChart>
+          ) : (
+            <div className="model-chart-empty">至少选择一个模型以查看趋势</div>
+          )}
           <div className="legend-row model-legend">
             {modelData.map((model, index) => (
               <button className={"legend-item" + (hidden[model.name] ? " legend-muted" : "")} key={model.name} onClick={() => onToggle(model.name)}>
-                <span className="legend-dot" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />{model.name}
+                <span className="legend-dot" style={{ backgroundColor: CHART_COLORS[MODEL_LATENCY.findIndex((item) => item.name === model.name) % CHART_COLORS.length] }} />{model.name}
               </button>
             ))}
           </div>
