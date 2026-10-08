@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+CIBWork-运营看板-离线预览/
+design-qa.md
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
